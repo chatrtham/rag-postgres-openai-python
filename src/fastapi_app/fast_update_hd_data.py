@@ -29,9 +29,8 @@ logger = logging.getLogger("ragapp")
 
 EMBEDDING_FIELDS = [
     'package_name', 'package_picture', 'url', 'installment_month', 'installment_limit',
-    'price_to_reserve_for_this_package', 'shop_name', 'category', 'category_tags',
-    'preview_1_10', 'selling_point', 'meta_keywords', 'brand', 'min_max_age',
-    'locations', 'meta_description', 'price_details', 'package_details',
+    'shop_name', 'category', 'category_tags','preview_1_10', 'selling_point','meta_keywords',
+    'brand', 'min_max_age','locations', 'meta_description', 'price_details','package_details',
     'important_info', 'payment_booking_info', 'general_info', 'early_signs_for_diagnosis',
     'how_to_diagnose', 'hdcare_summary', 'common_question', 'know_this_disease',
     'courses_of_action', 'signals_to_proceed_surgery', 'get_to_know_this_surgery',
@@ -125,9 +124,10 @@ async def seed_and_update_embeddings(engine):
 
         for url, record in tqdm(new_records.items(), desc="Processing new records"):
             try:
-                record["id"] = convert_to_int(record.get("id"))
                 record["price"] = convert_to_float(record.get("price"))
                 record["cash_discount"] = convert_to_float(record.get("cash_discount"))
+                record["price_after_cash_discount"] = convert_to_float(record.get("price_after_cash_discount"))
+                record["price_to_reserve_for_this_package"] = convert_to_float(record.get("price_to_reserve_for_this_package"))
                 record["brand_ranking_position"] = convert_to_int(record.get("brand_ranking_position"))
 
                 if record["price"] is None:
@@ -150,7 +150,7 @@ async def seed_and_update_embeddings(engine):
                         item_data[f'embedding_{field}'] = None
 
                     for key, value in item_data.items():
-                        if key not in ["id", "price", "cash_discount", "brand_ranking_position"]:
+                        if key not in ["price", "cash_discount", "price_after_cash_discount", "price_to_reserve_for_this_package", "brand_ranking_position"]:
                             item_data[key] = convert_to_str(value)
 
                     item = Item(**item_data)
@@ -169,9 +169,9 @@ async def seed_and_update_embeddings(engine):
                                         embedding_dimensions=openai_embed_dimensions,
                                     )
                                     setattr(item, f'embedding_{field}', embedding)
-                                    logger.info(f"Updated embedding for {field} of item {item.id}")
+                                    logger.info(f"Updated embedding for {field} of item {item.url}")
                                 except Exception as e:
-                                    logger.error(f"Error updating embedding for {field} of item {item.id}: {e}")
+                                    logger.error(f"Error updating embedding for {field} of item {item.url}: {e}")
 
                     session.merge(item)
                     await session.commit()
