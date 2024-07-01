@@ -12,24 +12,24 @@ from fastapi_app.rag_simple import SimpleRAGChat
 router = fastapi.APIRouter()
 
 
-@router.get("/items/{id}")
-async def item_handler(id: int):
-    """A simple API to get an item by ID."""
+@router.get("/items/{url}")
+async def item_handler(url: str):
+    """A simple API to get an item by URL."""
     async_session_maker = async_sessionmaker(global_storage.engine, expire_on_commit=False)
     async with async_session_maker() as session:
-        item = (await session.scalars(select(Item).where(Item.id == id))).first()
+        item = (await session.scalars(select(Item).where(Item.url == url))).first()
         return item.to_dict()
 
 
 @router.get("/similar")
-async def similar_handler(id: int, n: int = 5):
-    """A similarity API to find items similar to items with given ID."""
+async def similar_handler(url: str, n: int = 5):
+    """A similarity API to find items similar to items with given URL."""
     async_session_maker = async_sessionmaker(global_storage.engine, expire_on_commit=False)
     async with async_session_maker() as session:
-        item = (await session.scalars(select(Item).where(Item.id == id))).first()
+        item = (await session.scalars(select(Item).where(Item.url == url))).first()
         closest = await session.execute(
             select(Item, Item.embedding.l2_distance(item.embedding))
-            .filter(Item.id != id)
+            .filter(Item.url != url)
             .order_by(Item.embedding.l2_distance(item.embedding))
             .limit(n)
         )
