@@ -22,9 +22,8 @@ logger = logging.getLogger("ragapp")
 embedding_fields = [
     'embedding_package_name', 'embedding_package_picture', 'embedding_url', 
     'embedding_installment_month', 'embedding_installment_limit', 
-    'embedding_price_to_reserve_for_this_package', 'embedding_shop_name', 
-    'embedding_category', 'embedding_category_tags', 'embedding_preview_1_10', 
-    'embedding_selling_point', 'embedding_meta_keywords', 'embedding_brand', 
+    'embedding_shop_name', 'embedding_category', 'embedding_category_tags',
+    'embedding_preview_1_10', 'embedding_selling_point', 'embedding_meta_keywords', 'embedding_brand', 
     'embedding_min_max_age', 'embedding_locations', 'embedding_meta_description', 
     'embedding_price_details', 'embedding_package_details', 'embedding_important_info', 
     'embedding_payment_booking_info', 'embedding_general_info', 'embedding_early_signs_for_diagnosis', 
@@ -53,13 +52,13 @@ def convert_to_str(value):
     return str(value)
 
 async def seed_data(engine):
-    logger.info("Checking if the packages table exists...")
+    logger.info("Checking if the packages_all table exists...")
     async with engine.begin() as conn:
         result = await conn.execute(
             text(
                 """
                 SELECT EXISTS 
-                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages')
+                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_all')
                 """  # noqa
             )
         )
@@ -88,23 +87,23 @@ async def seed_data(engine):
         logger.info("Starting to insert records into the database...")
         for record in tqdm(records, desc="Inserting records"):
             try:
-                record["id"] = convert_to_int(record["id"])
-                if record["id"] is None:
-                    logger.error(f"Skipping record with invalid id: {record}")
+                record["url"] = convert_to_str(record["url"])
+                if record["url"] is None:
+                    logger.error(f"Skipping record with invalid url: {record}")
                     continue
                 
                 if "price" in record:
                     record["price"] = convert_to_float(record["price"])
                 if "cash_discount" in record:
                     record["cash_discount"] = convert_to_float(record["cash_discount"])
+                if "price_after_cash_discount" in record:
+                    record["price_after_cash_discount"] = convert_to_float(record["price_after_cash_discount"])
+                if "price_to_reserve_for_this_package" in record:
+                    record["price_to_reserve_for_this_package"] = convert_to_float(record["price_to_reserve_for_this_package"])
                 if "brand_ranking_position" in record:
                     record["brand_ranking_position"] = convert_to_int(record["brand_ranking_position"])
 
-                if record["price"] is None or record["cash_discount"] is None:
-                    logger.error(f"Skipping record with invalid numeric fields: {record}")
-                    continue
-
-                item = await session.execute(select(Item).filter(Item.id == record["id"]))
+                item = await session.execute(select(Item).filter(Item.url == record["url"]))
                 if item.scalars().first():
                     continue
 
@@ -114,14 +113,14 @@ async def seed_data(engine):
                     item_data[field] = None
 
                 for key, value in item_data.items():
-                    if key not in ["id", "price", "cash_discount", "brand_ranking_position"]:
+                    if key not in ["price", "price_to_reserve_for_this_package","cash_discount", "price_after_cash_discount", "brand_ranking_position"]:
                         item_data[key] = convert_to_str(value)
 
                 item = Item(**item_data)
                 session.add(item)
 
             except Exception as e:
-                logger.error(f"Error inserting record with id {record['id']}: {e}")
+                logger.error(f"Error inserting record with url {record['url']}: {e}")
                 await session.rollback()
                 continue
 

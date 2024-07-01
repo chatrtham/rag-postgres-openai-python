@@ -13,16 +13,16 @@ class Base(DeclarativeBase, MappedAsDataclass):
 
 
 class Item(Base):
-    __tablename__ = "packages"
-    id: Mapped[int] = mapped_column(primary_key=True)
+    __tablename__ = "packages_all"
     package_name: Mapped[str] = mapped_column()
     package_picture: Mapped[str] = mapped_column()
-    url: Mapped[str] = mapped_column()
+    url: Mapped[str] = mapped_column(primary_key=True)
     price: Mapped[float] = mapped_column()
     cash_discount: Mapped[float] = mapped_column()
     installment_month: Mapped[str] = mapped_column()
+    price_after_cash_discount: Mapped[float] = mapped_column()
     installment_limit: Mapped[str] = mapped_column()
-    price_to_reserve_for_this_package: Mapped[str] = mapped_column()
+    price_to_reserve_for_this_package: Mapped[float] = mapped_column()
     shop_name: Mapped[str] = mapped_column()
     category: Mapped[str] = mapped_column()
     category_tags: Mapped[str] = mapped_column()
@@ -59,7 +59,6 @@ class Item(Base):
     embedding_url: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_installment_month: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_installment_limit: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_price_to_reserve_for_this_package: Mapped[Vector] = (mapped_column(Vector(1536)))
     embedding_shop_name: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_category: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_category_tags: Mapped[Vector] = mapped_column(Vector(1536))
@@ -100,7 +99,6 @@ class Item(Base):
                 "embedding_url",
                 "embedding_installment_month",
                 "embedding_installment_limit",
-                "embedding_price_to_reserve_for_this_package",
                 "embedding_shop_name",
                 "embedding_category",
                 "embedding_category_tags",
@@ -142,7 +140,6 @@ class Item(Base):
                 "embedding_url",
                 "embedding_installment_month",
                 "embedding_installment_limit",
-                "embedding_price_to_reserve_for_this_package",
                 "embedding_shop_name",
                 "embedding_category",
                 "embedding_category_tags",
@@ -195,6 +192,7 @@ class Item(Base):
     price: {self.price}
     cash_discount: {self.cash_discount}
     installment_month: {self.installment_month}
+    price_after_cash_discount: {self.price_after_cash_discount}
     installment_limit: {self.installment_limit}
     price_to_reserve_for_this_package: {self.price_to_reserve_for_this_package}
     shop_name: {self.shop_name}
@@ -244,9 +242,6 @@ class Item(Base):
 
     def to_str_for_embedding_installment_limit(self):
         return f"Installment Limit: {self.installment_limit}" if self.installment_limit else ""
-
-    def to_str_for_embedding_price_to_reserve_for_this_package(self):
-        return f"Price to Reserve for This Package: {self.price_to_reserve_for_this_package}" if self.price_to_reserve_for_this_package else ""
 
     def to_str_for_embedding_shop_name(self):
         return f"Shop Name: {self.shop_name}" if self.shop_name else ""
@@ -375,13 +370,6 @@ indices = [
         postgresql_using="hnsw",
         postgresql_with={"m": 16, "ef_construction": 64},
         postgresql_ops={"embedding_installment_limit": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_price_to_reserve_for_this_package",
-        Item.embedding_price_to_reserve_for_this_package,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_price_to_reserve_for_this_package": "vector_ip_ops"},
     ),
     Index(
         "hnsw_index_for_embedding_shop_name",

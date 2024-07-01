@@ -1,6 +1,6 @@
 from openai import AsyncOpenAI
 from pgvector.utils import to_db
-from sqlalchemy import Float, Integer, select, text
+from sqlalchemy import String, Float, Integer, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from fastapi_app.embeddings import compute_text_embedding
@@ -47,14 +47,13 @@ class PostgresSearcher:
         vector_query = f"""
             WITH closest_embedding AS (
                 SELECT 
-                    id,
+                    url,
                     LEAST(
                         COALESCE(embedding_package_name <=> :embedding, 1), 
                         COALESCE(embedding_package_picture <=> :embedding, 1), 
                         COALESCE(embedding_url <=> :embedding, 1),
                         COALESCE(embedding_installment_month <=> :embedding, 1),
                         COALESCE(embedding_installment_limit <=> :embedding, 1),
-                        COALESCE(embedding_price_to_reserve_for_this_package <=> :embedding, 1),
                         COALESCE(embedding_shop_name <=> :embedding, 1),
                         COALESCE(embedding_category <=> :embedding, 1),
                         COALESCE(embedding_category_tags <=> :embedding, 1),
@@ -91,7 +90,7 @@ class PostgresSearcher:
                 {filter_clause_where}
             )
             SELECT 
-                id, 
+                url, 
                 RANK() OVER (ORDER BY min_distance) AS rank
             FROM 
                 closest_embedding
@@ -101,13 +100,12 @@ class PostgresSearcher:
             """
 
         fulltext_query = f"""
-            SELECT id, RANK () OVER (ORDER BY ts_rank_cd(
+            SELECT url, RANK () OVER (ORDER BY ts_rank_cd(
                 to_tsvector('thai', COALESCE(package_name, '')) ||
                 to_tsvector('thai', COALESCE(package_picture, '')) ||
                 to_tsvector('thai', COALESCE(url, '')) ||
                 to_tsvector('thai', COALESCE(installment_month, '')) ||
                 to_tsvector('thai', COALESCE(installment_limit, '')) ||
-                to_tsvector('thai', COALESCE(price_to_reserve_for_this_package, '')) ||
                 to_tsvector('thai', COALESCE(shop_name, '')) ||
                 to_tsvector('thai', COALESCE(category, '')) ||
                 to_tsvector('thai', COALESCE(category_tags, '')) ||
@@ -145,7 +143,6 @@ class PostgresSearcher:
                 to_tsvector('thai', COALESCE(url, '')) ||
                 to_tsvector('thai', COALESCE(installment_month, '')) ||
                 to_tsvector('thai', COALESCE(installment_limit, '')) ||
-                to_tsvector('thai', COALESCE(price_to_reserve_for_this_package, '')) ||
                 to_tsvector('thai', COALESCE(shop_name, '')) ||
                 to_tsvector('thai', COALESCE(category, '')) ||
                 to_tsvector('thai', COALESCE(category_tags, '')) ||
@@ -183,7 +180,6 @@ class PostgresSearcher:
                 to_tsvector('thai', COALESCE(url, '')) ||
                 to_tsvector('thai', COALESCE(installment_month, '')) ||
                 to_tsvector('thai', COALESCE(installment_limit, '')) ||
-                to_tsvector('thai', COALESCE(price_to_reserve_for_this_package, '')) ||
                 to_tsvector('thai', COALESCE(shop_name, '')) ||
                 to_tsvector('thai', COALESCE(category, '')) ||
                 to_tsvector('thai', COALESCE(category_tags, '')) ||
@@ -225,21 +221,21 @@ class PostgresSearcher:
             {fulltext_query}
         )
         SELECT
-            COALESCE(vector_search.id, fulltext_search.id) AS id,
+            COALESCE(vector_search.url, fulltext_search.url) AS url,
             COALESCE(1.0 / (:k + vector_search.rank), 0.0) +
             COALESCE(1.0 / (:k + fulltext_search.rank), 0.0) AS score
         FROM vector_search
-        FULL OUTER JOIN fulltext_search ON vector_search.id = fulltext_search.id
+        FULL OUTER JOIN fulltext_search ON vector_search.url = fulltext_search.url
         ORDER BY score DESC
         LIMIT 20
         """
 
         if query_text is not None and len(query_vector) > 0:
-            sql = text(hybrid_query).columns(id=Integer, score=Float)
+            sql = text(hybrid_query).columns(url=String, score=Float)
         elif len(query_vector) > 0:
-            sql = text(vector_query).columns(id=Integer, rank=Integer)
+            sql = text(vector_query).columns(url=String, rank=Integer)
         elif query_text is not None:
-            sql = text(fulltext_query).columns(id=Integer, rank=Integer)
+            sql = text(fulltext_query).columns(url=String, rank=Integer)
         else:
             raise ValueError("Both query text and query vector are empty")
 
@@ -253,8 +249,8 @@ class PostgresSearcher:
 
             # Convert results to Item models
             items = []
-            for id, _ in results[:top]:
-                item = await session.execute(select(Item).where(Item.id == id))
+            for url, _ in results[:top]:
+                item = await session.execute(select(Item).where(Item.url == url))
                 items.append(item.scalar())
             return items
 
@@ -292,7 +288,7 @@ class PostgresSearcher:
         """
         filter_clause_where, _ = self.build_filter_clause(filters, use_or=True)
         sql = f"""
-        SELECT id FROM packages
+        SELECT url FROM packages
         {filter_clause_where}
         LIMIT 10
         """
@@ -300,15 +296,15 @@ class PostgresSearcher:
         async with self.async_session_maker() as session:
             results = (
                 await session.execute(
-                    text(sql).columns(id=Integer)
+                    text(sql).columns(url=String)
                 )
             ).fetchall()
 
             # Convert results to Item models
             items = []
             for result in results:
-                item_id = result.id
-                item = await session.execute(select(Item).where(Item.id == item_id))
+                item_url = result.url
+                item = await session.execute(select(Item).where(Item.url == item_url))
                 items.append(item.scalar())
             return items
         

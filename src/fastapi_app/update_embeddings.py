@@ -5,6 +5,7 @@ from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from tqdm import tqdm
 
 from fastapi_app.embeddings import compute_text_embedding
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 EMBEDDING_FIELDS = [
     'package_name', 'package_picture', 'url', 'installment_month', 'installment_limit',
-    'price_to_reserve_for_this_package', 'shop_name', 'category', 'category_tags',
+    'shop_name', 'category', 'category_tags',
     'preview_1_10', 'selling_point', 'meta_keywords', 'brand', 'min_max_age',
     'locations', 'meta_description','price_details', 'package_details', 'important_info',
     'payment_booking_info', 'general_info', 'early_signs_for_diagnosis', 'how_to_diagnose',
@@ -38,31 +39,38 @@ async def update_embeddings():
     azure_credential = DefaultAzureCredential()
     openai_embed_client, openai_embed_model, openai_embed_dimensions = await create_openai_embed_client(azure_credential)
 
-    async with async_sessionmaker(engine, expire_on_commit=False)() as session:
-        async with session.begin():
-            items = (await session.scalars(select(Item))).all()
-            logger.info(f"Found {len(items)} items to process.")
+    async_session_maker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-            for item in tqdm(items, desc="Processing items"):
-                for field in EMBEDDING_FIELDS:
-                    to_str_method = get_to_str_method(item, field)
-                    if to_str_method:
-                        field_value = to_str_method()
-                        if field_value:
-                            try:
-                                embedding = await compute_text_embedding(
-                                    field_value,
-                                    openai_client=openai_embed_client,
-                                    embed_model=openai_embed_model,
-                                    embedding_dimensions=openai_embed_dimensions,
-                                )
-                                setattr(item, f'embedding_{field}', embedding)
-                                logger.info(f"Updated embedding for {field} of item {item.id}")
-                            except Exception as e:
-                                logger.error(f"Error updating embedding for {field} of item {item.id}: {e}")
+    async with async_session_maker() as session:
+        try:
+            async with session.begin():
+                items = (await session.scalars(select(Item))).all()
+                logger.info(f"Found {len(items)} items to process.")
 
-                session.add(item)
-            await session.commit()
+                for item in tqdm(items, desc="Processing items"):
+                    for field in EMBEDDING_FIELDS:
+                        to_str_method = get_to_str_method(item, field)
+                        if to_str_method:
+                            field_value = to_str_method()
+                            if field_value:
+                                try:
+                                    embedding = await compute_text_embedding(
+                                        field_value,
+                                        openai_client=openai_embed_client,
+                                        embed_model=openai_embed_model,
+                                        embedding_dimensions=openai_embed_dimensions,
+                                    )
+                                    setattr(item, f'embedding_{field}', embedding)
+                                    logger.info(f"Updated embedding for {field} of item {item.url}")
+                                except Exception as e:
+                                    logger.error(f"Error updating embedding for {field} of item {item.url}: {e}")
+
+                    session.add(item)
+                await session.commit()
+        finally:
+            await session.close()
+            await engine.dispose()
+            await azure_credential.close()  # Ensure the Azure credential client session is closed
 
 if __name__ == "__main__":
     asyncio.run(update_embeddings())

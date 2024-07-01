@@ -73,7 +73,7 @@ class AdvancedRAGChat:
             filters=filters,
         )
 
-        sources_content = [f"[{(item.id)}]:{item.to_str_for_broad_rag()}\n\n" for item in results]
+        sources_content = [f"[{(item.url)}]:{item.to_str_for_broad_rag()}\n\n" for item in results]
 
         thought_steps = [
             ThoughtStep(
@@ -134,7 +134,7 @@ class AdvancedRAGChat:
             results = await self.searcher.simple_sql_search(filters=specify_package_filters)
 
             if results:
-                sources_content = [f"[{(item.id)}]:{item.to_str_for_narrow_rag()}\n\n" for item in results]
+                sources_content = [f"[{(item.url)}]:{item.to_str_for_narrow_rag()}\n\n" for item in results]
 
                 thought_steps = [
                     ThoughtStep(
@@ -187,6 +187,15 @@ class AdvancedRAGChat:
         chat_resp["choices"][0]["context"] = {
             "data_points": {"text": sources_content},
             "thoughts": thought_steps + [
+                ThoughtStep(
+                    title="Prompt to generate answer",
+                    description=[str(message) for message in messages],
+                    props=(
+                        {"model": self.chat_model, "deployment": self.chat_deployment}
+                        if self.chat_deployment
+                        else {"model": self.chat_model}
+                    ),
+                ),
                 ThoughtStep(
                     title="Product Cards Details",
                     description=product_cards_details,
