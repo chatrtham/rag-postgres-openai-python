@@ -13,10 +13,12 @@ from tenacity import before_sleep_log, retry, stop_after_attempt, wait_random_ex
 from .api_models import ThoughtStep
 from .postgres_searcher import PostgresSearcher
 from .query_rewriter import (
+    build_handover_to_cx_function,
     build_hybrid_search_function,
     build_specify_package_function,
     extract_search_arguments,
     handle_specify_package_function_call,
+    is_handover_to_cx,
 )
 
 # Configure logging
@@ -98,8 +100,8 @@ class AdvancedRAGChat:
         ]
         return sources_content, thought_steps
 
-    async def get_product_cards_details(self, urls: list[str]) -> list[dict]:
-        return await self.searcher.get_product_cards_info(urls)
+    # async def get_product_cards_details(self, urls: list[str]) -> list[dict]:
+    #     return await self.searcher.get_product_cards_info(urls)
 
     async def run(
         self, messages: list[dict], overrides: dict[str, Any] = {}
@@ -125,8 +127,25 @@ class AdvancedRAGChat:
             temperature=0.0,
             max_tokens=specify_package_token_limit,
             n=1,
-            tools=build_specify_package_function()
+            tools=build_handover_to_cx_function()+build_specify_package_function()
         )
+
+        specify_package_resp = specify_package_chat_completion.model_dump()
+        if is_handover_to_cx(specify_package_chat_completion):
+            specify_package_resp["choices"][0]["message"]["content"] = "QISCUS_INTEGRATION_TO_CX"
+            
+            specify_package_resp["choices"][0]["context"] = {
+                "data_points": {"text": ""},
+                "thoughts": [
+                    ThoughtStep(
+                        title="Product Cards Details",
+                        description=[],
+                        props={}
+                    )
+                ]
+            }
+
+            return specify_package_resp
 
         specify_package_filters = handle_specify_package_function_call(specify_package_chat_completion)
 
@@ -176,13 +195,13 @@ class AdvancedRAGChat:
         )
         chat_resp = chat_completion_response.model_dump()
 
-        chat_resp_content = chat_resp["choices"][0]["message"]["content"]
-        package_urls = re.findall(r'https:\/\/hdmall\.co\.th\/[\w.,@?^=%&:\/~+#-]+', chat_resp_content)
+        # chat_resp_content = chat_resp["choices"][0]["message"]["content"]
+        # package_urls = re.findall(r'https:\/\/hdmall\.co\.th\/[\w.,@?^=%&:\/~+#-]+', chat_resp_content)
         
-        if package_urls:
-            product_cards_details = await self.get_product_cards_details(package_urls)
-        else:
-            product_cards_details = []
+        # if package_urls:
+        #     product_cards_details = await self.get_product_cards_details(package_urls)
+        # else:
+        #     product_cards_details = []
 
         chat_resp["choices"][0]["context"] = {
             "data_points": {"text": sources_content},
@@ -196,11 +215,11 @@ class AdvancedRAGChat:
                         else {"model": self.chat_model}
                     ),
                 ),
-                ThoughtStep(
-                    title="Product Cards Details",
-                    description=product_cards_details,
-                    props={}
-                )
+                # ThoughtStep(
+                #     title="Product Cards Details",
+                #     description=product_cards_details,
+                #     props={}
+                # )
             ]
         }
         return chat_resp

@@ -115,17 +115,43 @@ def handle_specify_package_function_call(chat_completion: ChatCompletion):
                     filters.append(
                         {
                             "column": "url",
-                            "comparison_operator": "=",
-                            "value": url,
+                            "comparison_operator": "ILIKE",
+                            "value": f"%{url}%",
                         }
                     )
                 if package_name:
                     filters.append(
                         {
                             "column": "package_name",
-                            "comparison_operator": "=",
-                            "value": package_name,
+                            "comparison_operator": "ILIKE",
+                            "value": f"%{package_name}%",
                         }
                     )
     return filters
 
+def build_handover_to_cx_function() -> list[ChatCompletionToolParam]:
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": "handover_to_cx",
+                "description": """
+                This function is used to seamlessly transfer the current conversation to a live
+                customer support agent when the user's message indicates a strong intent to buy a
+                particular package or service, or mentions booking, cancellation, scheduling,
+                or rescheduling, or other post-purchase intents. Upon invocation,
+                this function will notify the customer support team to take over the conversation,
+                ensuring that the user's needs are promptly and accurately addressed by a human representative.
+                """,
+                "parameters": {},
+            },
+        }
+    ]
+
+def is_handover_to_cx(chat_completion: ChatCompletion):
+    response_message = chat_completion.choices[0].message
+    if response_message.tool_calls:
+        for tool in response_message.tool_calls:
+            if tool.type == "function" and tool.function.name == "handover_to_cx":
+                return True
+    return False

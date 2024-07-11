@@ -13,7 +13,7 @@ class Base(DeclarativeBase, MappedAsDataclass):
 
 
 class Item(Base):
-    __tablename__ = "packages_all"
+    __tablename__ = "packages_all_staging"
     package_name: Mapped[str] = mapped_column()
     package_picture: Mapped[str] = mapped_column()
     url: Mapped[str] = mapped_column(primary_key=True)
@@ -178,7 +178,7 @@ class Item(Base):
     def to_str_for_broad_rag(self):
         return f"""
     package_name: {self.package_name}
-    url: {self.url}
+    url: {self.url}?utm_source=ai-chat
     locations: {self.locations}
     price: {self.price}
     brand: {self.brand}
@@ -188,7 +188,7 @@ class Item(Base):
         return f"""
     package_name: {self.package_name}
     package_picture: {self.package_picture}
-    url: {self.url}
+    url: {self.url}?utm_source=ai-chat
     price: {self.price}
     cash_discount: {self.cash_discount}
     installment_month: {self.installment_month}
@@ -307,7 +307,9 @@ class Item(Base):
         return f"Courses of Action: {self.courses_of_action}" if self.courses_of_action else ""
 
     def to_str_for_embedding_signals_to_proceed_surgery(self):
-        return f"Signals to Proceed Surgery: {self.signals_to_proceed_surgery}" if self.signals_to_proceed_surgery else ""
+        return (
+            f"Signals to Proceed Surgery: {self.signals_to_proceed_surgery}" if self.signals_to_proceed_surgery else ""
+        )
 
     def to_str_for_embedding_get_to_know_this_surgery(self):
         return f"Get to Know This Surgery: {self.get_to_know_this_surgery}" if self.get_to_know_this_surgery else ""

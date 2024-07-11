@@ -8,11 +8,10 @@ import numpy as np
 import pandas as pd
 from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
-from sqlalchemy import delete, select, text, inspect
+from sqlalchemy import inspect, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from tqdm import tqdm
 
-from fastapi_app.embeddings import compute_text_embedding
 from fastapi_app.openai_clients import create_openai_embed_client
 from fastapi_app.postgres_engine import create_postgres_engine_from_args, create_postgres_engine_from_env
 from fastapi_app.postgres_models import Item
@@ -24,19 +23,48 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ragapp")
 
 EMBEDDING_FIELDS = [
-    'package_name', 'package_picture', 'url', 'installment_month', 'installment_limit',
-    'shop_name', 'category', 'category_tags', 'preview_1_10', 'selling_point', 'meta_keywords',
-    'brand', 'min_max_age', 'locations', 'meta_description', 'price_details', 'package_details',
-    'important_info', 'payment_booking_info', 'general_info', 'early_signs_for_diagnosis',
-    'how_to_diagnose', 'hdcare_summary', 'common_question', 'know_this_disease',
-    'courses_of_action', 'signals_to_proceed_surgery', 'get_to_know_this_surgery',
-    'comparisons', 'getting_ready', 'recovery', 'side_effects', 'review_4_5_stars',
-    'brand_option_in_thai_name', 'faq'
+    "package_name",
+    "package_picture",
+    "url",
+    "installment_month",
+    "installment_limit",
+    "shop_name",
+    "category",
+    "category_tags",
+    "preview_1_10",
+    "selling_point",
+    "meta_keywords",
+    "brand",
+    "min_max_age",
+    "locations",
+    "meta_description",
+    "price_details",
+    "package_details",
+    "important_info",
+    "payment_booking_info",
+    "general_info",
+    "early_signs_for_diagnosis",
+    "how_to_diagnose",
+    "hdcare_summary",
+    "common_question",
+    "know_this_disease",
+    "courses_of_action",
+    "signals_to_proceed_surgery",
+    "get_to_know_this_surgery",
+    "comparisons",
+    "getting_ready",
+    "recovery",
+    "side_effects",
+    "review_4_5_stars",
+    "brand_option_in_thai_name",
+    "faq",
 ]
+
 
 def get_to_str_method(item, field):
     method_name = f"to_str_for_embedding_{field}"
     return getattr(item, method_name, None)
+
 
 def convert_to_int(value):
     try:
@@ -44,16 +72,19 @@ def convert_to_int(value):
     except (ValueError, TypeError):
         return None
 
+
 def convert_to_float(value):
     try:
         return float(value)
     except (ValueError, TypeError):
         return None
 
+
 def convert_to_str(value):
     if value is None:
         return None
     return str(value)
+
 
 async def verify_database_connection(engine):
     try:
@@ -64,9 +95,11 @@ async def verify_database_connection(engine):
         logger.error(f"Database connection failed: {e}")
         raise
 
+
 async def verify_table_exists(engine, table_name):
     try:
         async with engine.begin() as conn:
+
             def check_table(connection):
                 inspector = inspect(connection)
                 return table_name in inspector.get_table_names()
@@ -81,6 +114,7 @@ async def verify_table_exists(engine, table_name):
         logger.error(f"Error verifying table existence: {e}")
         raise
 
+
 async def count_records(engine, table_name):
     try:
         async with engine.begin() as conn:
@@ -89,6 +123,7 @@ async def count_records(engine, table_name):
             logger.info(f"Total records in {table_name} after processing: {count}")
     except Exception as e:
         logger.error(f"Error counting records: {e}")
+
 
 async def fetch_existing_records(session, batch_size=1000):
     offset = 0
@@ -105,14 +140,15 @@ async def fetch_existing_records(session, batch_size=1000):
         logger.info(f"Fetched {len(items)} records, offset now {offset}")
     return existing_records
 
+
 async def seed_and_update_embeddings(engine):
     start_time = time.time()
-    
+
     # Verify database connection
     await verify_database_connection(engine)
-    
+
     # Verify table exists
-    table_name = 'packages_all'  # Replace with your actual table name
+    table_name = "packages_all_staging"  # Replace with your actual table name
     await verify_table_exists(engine, table_name)
 
     async_session = async_sessionmaker(engine, expire_on_commit=False)
@@ -121,9 +157,7 @@ async def seed_and_update_embeddings(engine):
     csv_path = os.path.join(current_dir, "packages.csv")
 
     try:
-        df = pd.read_csv(
-            csv_path, delimiter=",", quotechar='"', escapechar="\\", on_bad_lines="skip", encoding="utf-8"
-        )
+        df = pd.read_csv(csv_path, delimiter=",", quotechar='"', escapechar="\\", on_bad_lines="skip", encoding="utf-8")
         logger.info(f"Read {len(df)} rows from CSV file")
         logger.info(f"First few rows: {df.head().to_dict()}")
         if len(df) == 0:
@@ -251,6 +285,7 @@ async def main():
 
     await seed_and_update_embeddings(engine)
     await engine.dispose()
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)
