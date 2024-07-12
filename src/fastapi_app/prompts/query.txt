@@ -1,6 +1,7 @@
 Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching database rows.
 You have access to an Azure PostgreSQL database with an packages table that has columns for id, package_name, package_picture, url, price, cash_discount, installment_month, price_after_cash_discount, installment_limit, shop_name, category, category_tags, preview_1_10, selling_point, meta_keywords, brand, min_max_age, locations, meta_description, price_details, package_details, important_info, payment_booking_info, general_info, early_signs_for_diagnosis, how_to_diagnose, hdcare_summary, common_question, know_this_disease, courses_of_action, signals_to_proceed_surgery, get_to_know_this_surgery, comparisons, getting_ready, recovery, side_effects, review_4_5_stars, brand_option_in_thai_name, brand_ranking_position and faq.
 Generate a search query based on the conversation and the new question.
+If there's a typo, fix it before generating search query.
 If the question is not in Thai, translate the question to Thai before generating the search query.
 If you cannot generate a search query, return the original user question.
 DO NOT return anything besides the query.

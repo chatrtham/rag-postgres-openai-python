@@ -178,7 +178,7 @@ class Item(Base):
     def to_str_for_broad_rag(self):
         return f"""
     package_name: {self.package_name}
-    url: {self.url}?utm_source=ai-chat
+    url: {self.url}
     locations: {self.locations}
     price: {self.price}
     brand: {self.brand}
@@ -188,7 +188,7 @@ class Item(Base):
         return f"""
     package_name: {self.package_name}
     package_picture: {self.package_picture}
-    url: {self.url}?utm_source=ai-chat
+    url: {self.url}
     price: {self.price}
     cash_discount: {self.cash_discount}
     installment_month: {self.installment_month}

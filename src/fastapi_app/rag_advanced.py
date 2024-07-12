@@ -99,7 +99,7 @@ class AdvancedRAGChat:
             )
         ]
         return sources_content, thought_steps
-
+    # TODO: Product Cards
     # async def get_product_cards_details(self, urls: list[str]) -> list[dict]:
     #     return await self.searcher.get_product_cards_info(urls)
 
@@ -195,9 +195,27 @@ class AdvancedRAGChat:
         )
         chat_resp = chat_completion_response.model_dump()
 
-        # chat_resp_content = chat_resp["choices"][0]["message"]["content"]
-        # package_urls = re.findall(r'https:\/\/hdmall\.co\.th\/[\w.,@?^=%&:\/~+#-]+', chat_resp_content)
+        chat_resp_content = chat_resp["choices"][0]["message"]["content"]
+        package_urls = re.findall(r'https:\/\/hdmall\.co\.th\/[\w.,@?^=%&:\/~+#-]+', chat_resp_content)
         
+        # Function to add UTM parameter to a URL
+        def add_utm_param(url):
+            if '?' in url:
+                return url + '&utm_source=ai-chat'
+            else:
+                return url + '?utm_source=ai-chat'
+
+        # Add UTM parameter to all found URLs
+        updated_urls = [add_utm_param(url) for url in package_urls]
+
+        # Replace old URLs with updated URLs in the content
+        for old_url, new_url in zip(package_urls, updated_urls):
+            chat_resp_content = chat_resp_content.replace(old_url, new_url)
+
+        # Update the chat response with the modified content
+        chat_resp["choices"][0]["message"]["content"] = chat_resp_content
+
+        # TODO: Product Cards
         # if package_urls:
         #     product_cards_details = await self.get_product_cards_details(package_urls)
         # else:
@@ -215,6 +233,7 @@ class AdvancedRAGChat:
                         else {"model": self.chat_model}
                     ),
                 ),
+                # TODO: Product Cards
                 # ThoughtStep(
                 #     title="Product Cards Details",
                 #     description=product_cards_details,

@@ -142,6 +142,7 @@ def build_handover_to_cx_function() -> list[ChatCompletionToolParam]:
                 or rescheduling, or other post-purchase intents. Upon invocation,
                 this function will notify the customer support team to take over the conversation,
                 ensuring that the user's needs are promptly and accurately addressed by a human representative.
+                Don't call this function if the user wants to talk to a pharmacist
                 """,
                 "parameters": {},
             },
