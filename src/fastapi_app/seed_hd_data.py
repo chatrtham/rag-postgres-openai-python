@@ -21,18 +21,10 @@ logger = logging.getLogger("ragapp")
 
 embedding_fields = [
     "embedding_package_name",
-    "embedding_package_picture",
-    "embedding_url",
-    "embedding_installment_month",
-    "embedding_installment_limit",
-    "embedding_shop_name",
     "embedding_category",
     "embedding_category_tags",
-    "embedding_preview_1_10",
-    "embedding_selling_point",
     "embedding_meta_keywords",
     "embedding_brand",
-    "embedding_min_max_age",
     "embedding_locations",
     "embedding_meta_description",
     "embedding_price_details",
@@ -79,13 +71,13 @@ def convert_to_str(value):
 
 
 async def seed_data(engine):
-    logger.info("Checking if the packages_all_staging table exists...")
+    logger.info("Checking if the packages_staging table exists...")
     async with engine.begin() as conn:
         result = await conn.execute(
             text(
                 """
                 SELECT EXISTS 
-                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_all_staging')
+                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_staging')
                 """  # noqa
             )
         )

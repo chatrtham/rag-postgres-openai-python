@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Index
+from sqlalchemy import Index, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column
 
 
@@ -13,7 +13,7 @@ class Base(DeclarativeBase, MappedAsDataclass):
 
 
 class Item(Base):
-    __tablename__ = "packages_all_staging"
+    __tablename__ = "packages_all"
     package_name: Mapped[str] = mapped_column()
     package_picture: Mapped[str] = mapped_column()
     url: Mapped[str] = mapped_column(primary_key=True)
@@ -55,18 +55,10 @@ class Item(Base):
     brand_ranking_position: Mapped[int] = mapped_column()
     faq: Mapped[str] = mapped_column()
     embedding_package_name: Mapped[Vector] = mapped_column(Vector(1536))  # ada-002
-    embedding_package_picture: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_url: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_installment_month: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_installment_limit: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_shop_name: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_category: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_category_tags: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_preview_1_10: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_selling_point: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_meta_keywords: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_brand: Mapped[Vector] = mapped_column(Vector(1536))
-    embedding_min_max_age: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_locations: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_meta_description: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_price_details: Mapped[Vector] = mapped_column(Vector(1536))
@@ -89,24 +81,17 @@ class Item(Base):
     embedding_review_4_5_stars: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_brand_option_in_thai_name: Mapped[Vector] = mapped_column(Vector(1536))
     embedding_faq: Mapped[Vector] = mapped_column(Vector(1536))
+    is_recommended: Mapped[bool] = mapped_column(Boolean, default=False)
 
     def to_dict(self, include_embedding: bool = False):
         model_dict = asdict(self)
         if include_embedding:
             embedding_columns = [
                 "embedding_package_name",
-                "embedding_package_picture",
-                "embedding_url",
-                "embedding_installment_month",
-                "embedding_installment_limit",
-                "embedding_shop_name",
                 "embedding_category",
                 "embedding_category_tags",
-                "embedding_preview_1_10",
-                "embedding_selling_point",
                 "embedding_meta_keywords",
                 "embedding_brand",
-                "embedding_min_max_age",
                 "embedding_locations",
                 "embedding_meta_description",
                 "embedding_price_details",
@@ -136,18 +121,10 @@ class Item(Base):
             # Remove embedding columns if not included
             embedding_columns = [
                 "embedding_package_name",
-                "embedding_package_picture",
-                "embedding_url",
-                "embedding_installment_month",
-                "embedding_installment_limit",
-                "embedding_shop_name",
                 "embedding_category",
                 "embedding_category_tags",
-                "embedding_preview_1_10",
-                "embedding_selling_point",
                 "embedding_meta_keywords",
                 "embedding_brand",
-                "embedding_min_max_age",
                 "embedding_locations",
                 "embedding_meta_description",
                 "embedding_price_details",
@@ -231,41 +208,17 @@ class Item(Base):
     def to_str_for_embedding_package_name(self):
         return f"Package Name: {self.package_name}" if self.package_name else ""
 
-    def to_str_for_embedding_package_picture(self):
-        return f"Package Picture: {self.package_picture}" if self.package_picture else ""
-
-    def to_str_for_embedding_url(self):
-        return f"URL: {self.url}" if self.url else ""
-
-    def to_str_for_embedding_installment_month(self):
-        return f"Installment Month: {self.installment_month}" if self.installment_month else ""
-
-    def to_str_for_embedding_installment_limit(self):
-        return f"Installment Limit: {self.installment_limit}" if self.installment_limit else ""
-
-    def to_str_for_embedding_shop_name(self):
-        return f"Shop Name: {self.shop_name}" if self.shop_name else ""
-
     def to_str_for_embedding_category(self):
         return f"Category: {self.category}" if self.category else ""
 
     def to_str_for_embedding_category_tags(self):
         return f"Category Tags: {self.category_tags}" if self.category_tags else ""
 
-    def to_str_for_embedding_preview_1_10(self):
-        return f"Preview 1-10: {self.preview_1_10}" if self.preview_1_10 else ""
-
-    def to_str_for_embedding_selling_point(self):
-        return f"Selling Point: {self.selling_point}" if self.selling_point else ""
-
     def to_str_for_embedding_meta_keywords(self):
         return f"Meta Keywords: {self.meta_keywords}" if self.meta_keywords else ""
 
     def to_str_for_embedding_brand(self):
         return f"Brand: {self.brand}" if self.brand else ""
-
-    def to_str_for_embedding_min_max_age(self):
-        return f"Min-Max Age: {self.min_max_age}" if self.min_max_age else ""
 
     def to_str_for_embedding_locations(self):
         return f"Locations: {self.locations}" if self.locations else ""
@@ -346,41 +299,6 @@ indices = [
         postgresql_ops={"embedding_package_name": "vector_ip_ops"},
     ),
     Index(
-        "hnsw_index_for_embedding_package_picture",
-        Item.embedding_package_picture,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_package_picture": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_url",
-        Item.embedding_url,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_url": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_installment_month",
-        Item.embedding_installment_month,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_installment_month": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_installment_limit",
-        Item.embedding_installment_limit,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_installment_limit": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_shop_name",
-        Item.embedding_shop_name,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_shop_name": "vector_ip_ops"},
-    ),
-    Index(
         "hnsw_index_for_embedding_category",
         Item.embedding_category,
         postgresql_using="hnsw",
@@ -395,20 +313,6 @@ indices = [
         postgresql_ops={"embedding_category_tags": "vector_ip_ops"},
     ),
     Index(
-        "hnsw_index_for_embedding_preview_1_10",
-        Item.embedding_preview_1_10,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_preview_1_10": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_selling_point",
-        Item.embedding_selling_point,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_selling_point": "vector_ip_ops"},
-    ),
-    Index(
         "hnsw_index_for_embedding_meta_keywords",
         Item.embedding_meta_keywords,
         postgresql_using="hnsw",
@@ -421,13 +325,6 @@ indices = [
         postgresql_using="hnsw",
         postgresql_with={"m": 16, "ef_construction": 64},
         postgresql_ops={"embedding_brand": "vector_ip_ops"},
-    ),
-    Index(
-        "hnsw_index_for_embedding_min_max_age",
-        Item.embedding_min_max_age,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding_min_max_age": "vector_ip_ops"},
     ),
     Index(
         "hnsw_index_for_embedding_locations",

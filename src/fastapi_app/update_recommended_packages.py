@@ -1,6 +1,6 @@
 import asyncio
 import logging
-
+import pandas as pd
 from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
 from sqlalchemy import select, func
@@ -33,8 +33,16 @@ def get_to_str_method(item, field):
     method_name = f"to_str_for_embedding_{field}"
     return getattr(item, method_name, None)
 
-async def fetch_items(session, offset, batch_size):
-    return (await session.scalars(select(Item).where(Item.embedding_package_name.is_(None)).offset(offset).limit(batch_size))).all()
+async def fetch_items(session, urls, offset, batch_size):
+    return (
+        await session.scalars(
+            select(Item)
+            .where(Item.url.in_(urls))
+            .where(Item.is_recommended.is_(False))
+            .offset(offset)
+            .limit(batch_size)
+        )
+    ).all()
 
 async def process_batch(async_session_maker, items, openai_embed_client, openai_embed_model, openai_embed_dimensions):
     async with async_session_maker() as session:
@@ -56,7 +64,7 @@ async def process_batch(async_session_maker, items, openai_embed_client, openai_
                                 logger.info(f"Updated embedding for {field} of item {item.url}")
                             except Exception as e:
                                 logger.error(f"Error updating embedding for {field} of item {item.url}: {e}")
-
+                item.is_recommended = True
                 session.add(item)
             await session.commit()
 
@@ -67,15 +75,26 @@ async def update_embeddings(batch_size=100):
 
     async_session_maker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
+    # Read CSV file
+    df = pd.read_csv('recommended_packages.csv')
+    urls = df['package url'].tolist()
+    logger.info(f"Total URLs in CSV: {len(urls)}")
+    unique_urls = list(set(urls))
+    logger.info(f"Unique URLs: {len(unique_urls)}")
+
     async with async_session_maker() as fetch_session:
-        total_items = await fetch_session.scalar(select(func.count(Item.url)).where(Item.embedding_package_name.is_(None)))
-        logger.info(f"Found {total_items} items to process.")
+        total_items = await fetch_session.scalar(
+            select(func.count(Item.url))
+            .where(Item.url.in_(unique_urls))
+            .where(Item.is_recommended.is_(False))
+        )
+        logger.info(f"Found {total_items} items to process in database.")
 
         offset = 0
         with tqdm_asyncio(total=total_items, desc="Updating embeddings") as pbar:
             while offset < total_items:
                 async with async_session_maker() as fetch_session:
-                    items = await fetch_items(fetch_session, offset, batch_size)
+                    items = await fetch_items(fetch_session, unique_urls, offset, batch_size)
                     if not items:
                         break
 

@@ -78,8 +78,10 @@ class PostgresSearcher:
                         COALESCE(embedding_faq <=> :embedding, 1)
                     ) AS min_distance
                 FROM 
-                    packages
-                {filter_clause_where}
+                    packages_all
+                WHERE
+                    is_recommended = true
+                {filter_clause_and}
             )
             SELECT 
                 url, 
@@ -98,7 +100,6 @@ class PostgresSearcher:
                 to_tsvector('thai', COALESCE(url, '')) ||
                 to_tsvector('thai', COALESCE(installment_month, '')) ||
                 to_tsvector('thai', COALESCE(installment_limit, '')) ||
-                to_tsvector('thai', COALESCE(price_to_reserve_for_this_package, '')) ||
                 to_tsvector('thai', COALESCE(shop_name, '')) ||
                 to_tsvector('thai', COALESCE(category, '')) ||
                 to_tsvector('thai', COALESCE(category_tags, '')) ||
@@ -129,14 +130,13 @@ class PostgresSearcher:
                 to_tsvector('thai', COALESCE(review_4_5_stars, '')) ||
                 to_tsvector('thai', COALESCE(brand_option_in_thai_name, '')) ||
                 to_tsvector('thai', COALESCE(faq, '')), query) DESC)
-            FROM packages, plainto_tsquery('thai', :query) query
+            FROM packages_all, plainto_tsquery('thai', :query) query
             WHERE (
                 to_tsvector('thai', COALESCE(package_name, '')) ||
                 to_tsvector('thai', COALESCE(package_picture, '')) ||
                 to_tsvector('thai', COALESCE(url, '')) ||
                 to_tsvector('thai', COALESCE(installment_month, '')) ||
                 to_tsvector('thai', COALESCE(installment_limit, '')) ||
-                to_tsvector('thai', COALESCE(price_to_reserve_for_this_package, '')) ||
                 to_tsvector('thai', COALESCE(shop_name, '')) ||
                 to_tsvector('thai', COALESCE(category, '')) ||
                 to_tsvector('thai', COALESCE(category_tags, '')) ||
@@ -167,14 +167,16 @@ class PostgresSearcher:
                 to_tsvector('thai', COALESCE(review_4_5_stars, '')) ||
                 to_tsvector('thai', COALESCE(brand_option_in_thai_name, '')) ||
                 to_tsvector('thai', COALESCE(faq, ''))
-            ) @@ query {filter_clause_and}
+            ) @@ query 
+            AND 
+                is_recommended = true
+            {filter_clause_and}
             ORDER BY ts_rank_cd(
                 to_tsvector('thai', COALESCE(package_name, '')) ||
                 to_tsvector('thai', COALESCE(package_picture, '')) ||
                 to_tsvector('thai', COALESCE(url, '')) ||
                 to_tsvector('thai', COALESCE(installment_month, '')) ||
                 to_tsvector('thai', COALESCE(installment_limit, '')) ||
-                to_tsvector('thai', COALESCE(price_to_reserve_for_this_package, '')) ||
                 to_tsvector('thai', COALESCE(shop_name, '')) ||
                 to_tsvector('thai', COALESCE(category, '')) ||
                 to_tsvector('thai', COALESCE(category_tags, '')) ||
@@ -283,7 +285,7 @@ class PostgresSearcher:
         """
         filter_clause_where, _ = self.build_filter_clause(filters, use_or=True)
         sql = f"""
-        SELECT url FROM packages_all_staging
+        SELECT url FROM packages_all
         {filter_clause_where}
         LIMIT 10
         """
@@ -309,7 +311,7 @@ class PostgresSearcher:
     #     Fetch detailed information about items using their URLs as identifiers.
     #     """
     #     sql = """
-    #     SELECT package_name, package_picture, url, price FROM packages_all_staging WHERE url = ANY(:urls)
+    #     SELECT package_name, package_picture, url, price FROM packages_all WHERE url = ANY(:urls)
     #     """
         
     #     async with self.async_session_maker() as session:
