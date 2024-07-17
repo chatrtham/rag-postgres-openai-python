@@ -168,8 +168,6 @@ class PostgresSearcher:
                 to_tsvector('thai', COALESCE(brand_option_in_thai_name, '')) ||
                 to_tsvector('thai', COALESCE(faq, ''))
             ) @@ query 
-            AND 
-                is_recommended = true
             {filter_clause_and}
             ORDER BY ts_rank_cd(
                 to_tsvector('thai', COALESCE(package_name, '')) ||
