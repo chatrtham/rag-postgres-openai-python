@@ -47,8 +47,8 @@ class AdvancedRAGChat:
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6), before_sleep=before_sleep_log(logger, logging.WARNING))
     async def openai_chat_completion(self, *args, **kwargs) -> ChatCompletion:
         return await self.openai_chat_client.chat.completions.create(*args, **kwargs)
-
-    async def hybrid_search(self, messages, top, vector_search, text_search):
+    
+    async def google_search(self, messages):
         # Generate an optimized keyword search query based on the chat history and the last question
         query_messages = copy.deepcopy(messages)
         query_messages.insert(0, {"role": "system", "content": self.query_prompt_template})
@@ -66,36 +66,20 @@ class AdvancedRAGChat:
 
         query_text, filters = extract_search_arguments(query_chat_completion)
 
-        # Retrieve relevant items from the database with the GPT optimized query
-        results = await self.searcher.search_and_embed(
-            query_text,
-            top=top,
-            enable_vector_search=vector_search,
-            enable_text_search=text_search,
-            filters=filters,
-        )
+        results = await self.searcher.google_search(query_text, top=3)
 
         sources_content = [f"[{(item.url)}]:{item.to_str_for_broad_rag()}\n\n" for item in results]
 
         thought_steps = [
             ThoughtStep(
                 title="Prompt to generate search arguments",
-                description=[str(message) for message in query_messages],
-                props={"model": self.chat_model, "deployment": self.chat_deployment} if self.chat_deployment else {"model": self.chat_model}
-            ),
-            ThoughtStep(
-                title="Generated search arguments",
                 description=query_text,
-                props={"filters": filters}
+                props={}
             ),
             ThoughtStep(
-                title="Hybrid Search results",
+                title="Google Search results",
                 description=[result.to_dict() for result in results],
-                props={
-                    "top": top,
-                    "vector_search": vector_search,
-                    "text_search": text_search
-                }
+                props={}
             )
         ]
         return sources_content, thought_steps
@@ -110,11 +94,6 @@ class AdvancedRAGChat:
         for message in messages:
             if isinstance(message['content'], str):
                 message['content'] = [{'type': 'text', 'text': message['content']}]
-
-        # Determine the search mode and the number of results to return
-        text_search = overrides.get("retrieval_mode") in ["text", "hybrid", None]
-        vector_search = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
-        top = overrides.get("top", 3)
 
         # Generate a prompt to specify the package if the user is referring to a specific package
         specify_package_messages = copy.deepcopy(messages)
@@ -174,9 +153,9 @@ class AdvancedRAGChat:
                 ]
             else:
                 # No results found with SQL search, fall back to the hybrid search
-                sources_content, thought_steps = await self.hybrid_search(messages, top, vector_search, text_search)
+                sources_content, thought_steps = await self.google_search(messages)
         else:  # Hybrid search
-            sources_content, thought_steps = await self.hybrid_search(messages, top, vector_search, text_search)
+            sources_content, thought_steps = await self.google_search(messages)
 
         content = "\n".join(sources_content)
 
