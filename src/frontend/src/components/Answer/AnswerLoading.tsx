@@ -14,12 +14,12 @@ export const AnswerLoading = () => {
         <animated.div style={{ ...animatedStyles }}>
             <Stack className={styles.answerContainer} verticalAlign="space-between">
                 <AnswerIcon />
-                <Stack.Item grow>
+                <Stack.Package grow>
                     <p className={styles.answerText}>
                         Generating answer
                         <span className={styles.loadingdots} />
                     </p>
-                </Stack.Item>
+                </Stack.Package>
             </Stack>
         </animated.div>
     );

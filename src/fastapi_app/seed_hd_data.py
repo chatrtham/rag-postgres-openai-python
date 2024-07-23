@@ -15,7 +15,7 @@ from fastapi_app.postgres_engine import (
     create_postgres_engine_from_args,
     create_postgres_engine_from_env,
 )
-from fastapi_app.postgres_models import Item
+from fastapi_app.postgres_models import Package
 
 logger = logging.getLogger("ragapp")
 
@@ -71,13 +71,13 @@ def convert_to_str(value):
 
 
 async def seed_data(engine):
-    logger.info("Checking if the packages_staging table exists...")
+    logger.info("Checking if the packages_all_staging table exists...")
     async with engine.begin() as conn:
         result = await conn.execute(
             text(
                 """
                 SELECT EXISTS 
-                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_staging')
+                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_all_staging')
                 """  # noqa
             )
         )
@@ -126,11 +126,11 @@ async def seed_data(engine):
                 if "brand_ranking_position" in record:
                     record["brand_ranking_position"] = convert_to_int(record["brand_ranking_position"])
 
-                item = await session.execute(select(Item).filter(Item.url == record["url"]))
-                if item.scalars().first():
+                package = await session.execute(select(Package).filter(Package.url == record["url"]))
+                if package.scalars().first():
                     continue
 
-                item_data = {key: value for key, value in record.items() if key in Item.__table__.columns}
+                item_data = {key: value for key, value in record.items() if key in Package.__table__.columns}
 
                 for field in embedding_fields:
                     item_data[field] = None
@@ -141,12 +141,11 @@ async def seed_data(engine):
                         "price_to_reserve_for_this_package",
                         "cash_discount",
                         "price_after_cash_discount",
-                        "brand_ranking_position",
                     ]:
                         item_data[key] = convert_to_str(value)
 
-                item = Item(**item_data)
-                session.add(item)
+                package = Package(**item_data)
+                session.add(package)
 
             except Exception as e:
                 logger.error(f"Error inserting record with url {record['url']}: {e}")

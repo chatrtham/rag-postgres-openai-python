@@ -1,5 +1,6 @@
-import requests
 import os
+
+import requests
 from dotenv import load_dotenv
 
 # Load the environment variables
@@ -23,15 +24,13 @@ def google_search_function(search_query):
     if response.status_code == 200:
         # Parse the JSON response
         data = response.json()
-        for item in data.get('items', []):
-            link = item.get('link')
+        for item in data.get("items", []):
+            link = item.get("link")
             if link:
                 links.append(link)
-        
         return links
     else:
         return {"error": "An error occurred"}
-
 
 
 if __name__ == "__main__":

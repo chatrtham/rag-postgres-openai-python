@@ -13,9 +13,9 @@ export const AnswerError = ({ error, onRetry }: Props) => {
         <Stack className={styles.answerContainer} verticalAlign="space-between">
             <ErrorCircle24Regular aria-hidden="true" aria-label="Error icon" primaryFill="red" />
 
-            <Stack.Item grow>
+            <Stack.Package grow>
                 <p className={styles.answerText}>{error}</p>
-            </Stack.Item>
+            </Stack.Package>
 
             <PrimaryButton className={styles.retryButton} onClick={onRetry} text="Retry" />
         </Stack>

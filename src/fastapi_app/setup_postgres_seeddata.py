@@ -13,13 +13,13 @@ from fastapi_app.postgres_engine import (
     create_postgres_engine_from_args,
     create_postgres_engine_from_env,
 )
-from fastapi_app.postgres_models import Item
+from fastapi_app.postgres_models import Package
 
 logger = logging.getLogger("ragapp")
 
 
 async def seed_data(engine):
-    # Check if Item table exists
+    # Check if Package table exists
     async with engine.begin() as conn:
         result = await conn.execute(
             text(
@@ -36,10 +36,10 @@ async def seed_data(engine):
         with open(os.path.join(current_dir, "seed_data.json")) as f:
             catalog_items = json.load(f)
             for catalog_item in catalog_items:
-                item = await session.execute(select(Item).filter(Item.id == catalog_item["Id"]))
-                if item.scalars().first():
+                package = await session.execute(select(Package).filter(Package.id == catalog_item["Id"]))
+                if package.scalars().first():
                     continue
-                item = Item(
+                package = Package(
                     id=catalog_item["Id"],
                     type=catalog_item["Type"],
                     brand=catalog_item["Brand"],
@@ -48,7 +48,7 @@ async def seed_data(engine):
                     price=catalog_item["Price"],
                     embedding=catalog_item["Embedding"],
                 )
-                session.add(item)
+                session.add(package)
             try:
                 await session.commit()
             except sqlalchemy.exc.IntegrityError:

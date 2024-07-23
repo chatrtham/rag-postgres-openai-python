@@ -43,7 +43,7 @@ class SimpleRAGChat:
             original_user_query, top=top, enable_vector_search=vector_search, enable_text_search=text_search
         )
 
-        sources_content = [f"[{(item.id)}]:{item.to_str_for_rag()}\n\n" for item in results]
+        sources_content = [f"[{(package.id)}]:{package.to_str_for_rag()}\n\n" for package in results]
         content = "\n".join(sources_content)
 
         # Generate a contextual and content specific answer using the search results and chat history

@@ -5,10 +5,10 @@ type ParsedSupportingContentItem = {
     content: string;
 };
 
-export function parseSupportingContentItem(item: string): ParsedSupportingContentItem {
-    // Assumes the item starts with the file name followed by : and the content.
+export function parseSupportingContentItem(package: string): ParsedSupportingContentItem {
+    // Assumes the package starts with the file name followed by : and the content.
     // Example: "sdp_corporate.pdf: this is the content that follows".
-    const parts = item.split(": ");
+    const parts = package.split(": ");
     const title = parts[0];
     const content = DOMPurify.sanitize(parts.slice(1).join(": "));
 
