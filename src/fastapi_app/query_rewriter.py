@@ -44,7 +44,7 @@ def build_hybrid_search_function() -> list[ChatCompletionToolParam]:
 def extract_search_arguments(chat_completion: ChatCompletion):
     response_message = chat_completion.choices[0].message
     search_query = None
-    filters = []
+    
     if response_message.tool_calls:
         for tool in response_message.tool_calls:
             if tool.type != "function":
@@ -53,18 +53,10 @@ def extract_search_arguments(chat_completion: ChatCompletion):
             if function.name == "search_database":
                 arg = json.loads(function.arguments)
                 search_query = arg.get("search_query")
-                if "price_filter" in arg and arg["price_filter"]:
-                    price_filter = arg["price_filter"]
-                    filters.append(
-                        {
-                            "column": "price",
-                            "comparison_operator": price_filter["comparison_operator"],
-                            "value": price_filter["value"],
-                        }
-                    )
     elif query_text := response_message.content:
         search_query = query_text.strip()
-    return search_query, filters
+        
+    return search_query
 
 
 def build_specify_package_function() -> list[ChatCompletionToolParam]:

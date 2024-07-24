@@ -1,5 +1,3 @@
-import re
-
 import fastapi
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker

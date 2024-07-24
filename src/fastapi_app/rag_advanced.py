@@ -1,7 +1,6 @@
 import copy
 import logging
 import pathlib
-import re
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -69,7 +68,7 @@ class AdvancedRAGChat:
             tool_choice="auto",
         )
 
-        query_text, filters = extract_search_arguments(query_chat_completion)
+        query_text = extract_search_arguments(query_chat_completion)
 
         results = await self.searcher.google_search(query_text, top=3)
 
