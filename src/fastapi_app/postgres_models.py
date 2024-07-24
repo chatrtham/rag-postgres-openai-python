@@ -54,13 +54,13 @@ class Package(Base):
 
     def to_dict(self):
         return asdict(self)
+    
     def to_str_for_broad_rag(self):
         return f"""
     package_name: {self.package_name}
     url: {self.url}
     locations: {self.locations}
     price: {self.price}
-    brand: {self.brand}
     """
 
     def to_str_for_narrow_rag(self):
@@ -75,11 +75,9 @@ class Package(Base):
     installment_limit: {self.installment_limit}
     price_to_reserve_for_this_package: {self.price_to_reserve_for_this_package}
     shop_name: {self.shop_name}
-    category: {self.category}
     category_tags: {self.category_tags}
     preview_1_10: {self.preview_1_10}
     selling_point: {self.selling_point}
-    meta_keywords: {self.meta_keywords}
     brand: {self.brand}
     min_max_age: {self.min_max_age}
     locations: {self.locations}
