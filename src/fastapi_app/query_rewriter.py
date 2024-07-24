@@ -6,33 +6,19 @@ from openai.types.chat import (
 )
 
 
-def build_hybrid_search_function() -> list[ChatCompletionToolParam]:
+def build_google_search_function() -> list[ChatCompletionToolParam]:
     return [
         {
             "type": "function",
             "function": {
                 "name": "search_database",
-                "description": "Search PostgreSQL database for relevant products based on user query",
+                "description": "Search for relevant products based on user query",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "search_query": {
                             "type": "string",
                             "description": "Query string to use for full text search, e.g. 'ตรวจสุขภาพ'",
-                        },
-                        "price_filter": {
-                            "type": "object",
-                            "description": "Filter search results based on price in Thai Baht of the package",
-                            "properties": {
-                                "comparison_operator": {
-                                    "type": "string",
-                                    "description": "Operator to compare the column value, either '>', '<', '>=', '<=', '='",
-                                },
-                                "value": {
-                                    "type": "number",
-                                    "description": "Value to compare against, e.g. 30",
-                                },
-                            },
                         },
                     },
                     "required": ["search_query"],

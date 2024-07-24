@@ -13,7 +13,7 @@ from .api_models import ThoughtStep
 from .postgres_searcher import PostgresSearcher
 from .query_rewriter import (
     build_handover_to_cx_function,
-    build_hybrid_search_function,
+    build_google_search_function,
     build_specify_package_function,
     extract_search_arguments,
     handle_specify_package_function_call,
@@ -64,7 +64,7 @@ class AdvancedRAGChat:
             temperature=0.0,
             max_tokens=query_response_token_limit,
             n=1,
-            tools=build_hybrid_search_function(),
+            tools=build_google_search_function(),
             tool_choice="auto",
         )
 
