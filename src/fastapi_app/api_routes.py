@@ -7,7 +7,6 @@ from fastapi_app.globals import global_storage
 from fastapi_app.postgres_models import Package
 from fastapi_app.postgres_searcher import PostgresSearcher
 from fastapi_app.rag_advanced import AdvancedRAGChat
-from fastapi_app.rag_simple import SimpleRAGChat
 from fastapi_app.utils import update_urls_with_utm
 
 router = fastapi.APIRouter()
@@ -24,26 +23,19 @@ async def package_handler(url: str):
 
 @router.post("/chat")
 async def chat_handler(chat_request: ChatRequest):
+    """API to chat with the RAG model."""
     messages = [message.model_dump() for message in chat_request.messages]
-    overrides = chat_request.context.get("overrides", {})
 
     searcher = PostgresSearcher(global_storage.engine)
-    if overrides.get("use_advanced_flow"):
-        ragchat = AdvancedRAGChat(
-            searcher=searcher,
-            openai_chat_client=global_storage.openai_chat_client,
-            chat_model=global_storage.openai_chat_model,
-            chat_deployment=global_storage.openai_chat_deployment,
-        )
-    else:
-        ragchat = SimpleRAGChat(
-            searcher=searcher,
-            openai_chat_client=global_storage.openai_chat_client,
-            chat_model=global_storage.openai_chat_model,
-            chat_deployment=global_storage.openai_chat_deployment,
-        )
 
-    chat_resp = await ragchat.run(messages, overrides=overrides)
+    ragchat = AdvancedRAGChat(
+        searcher=searcher,
+        openai_chat_client=global_storage.openai_chat_client,
+        chat_model=global_storage.openai_chat_model,
+        chat_deployment=global_storage.openai_chat_deployment,
+    )
+
+    chat_resp = await ragchat.run(messages)
     chat_resp_content = chat_resp["choices"][0]["message"]["content"]
 
     # Update URLs with UTM parameters

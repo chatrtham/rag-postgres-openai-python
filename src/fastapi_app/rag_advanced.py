@@ -81,7 +81,7 @@ class AdvancedRAGChat:
         return sources_content, thought_steps
 
     async def run(
-        self, messages: list[dict], overrides: dict[str, Any] = {}
+        self, messages: list[dict]
     ) -> dict[str, Any] | AsyncGenerator[dict[str, Any], None]:
         # Normalize the message format
         for message in messages:
@@ -144,7 +144,7 @@ class AdvancedRAGChat:
         chat_completion_response = await self.openai_chat_completion(
             model=self.chat_deployment if self.chat_deployment else self.chat_model,
             messages=messages,
-            temperature=overrides.get("temperature", 0.3),
+            temperature=0,
             max_tokens=response_token_limit,
             n=1,
             stream=False,
