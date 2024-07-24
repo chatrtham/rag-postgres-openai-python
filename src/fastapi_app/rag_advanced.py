@@ -12,8 +12,8 @@ from tenacity import before_sleep_log, retry, stop_after_attempt, wait_random_ex
 from .api_models import ThoughtStep
 from .postgres_searcher import PostgresSearcher
 from .query_rewriter import (
-    build_handover_to_cx_function,
     build_google_search_function,
+    build_handover_to_cx_function,
     build_specify_package_function,
     extract_search_arguments,
     handle_specify_package_function_call,
@@ -105,12 +105,6 @@ class AdvancedRAGChat:
         specify_package_resp = specify_package_chat_completion.model_dump()
         if is_handover_to_cx(specify_package_chat_completion):
             specify_package_resp["choices"][0]["message"]["content"] = "QISCUS_INTEGRATION_TO_CX"
-
-            specify_package_resp["choices"][0]["context"] = {
-                "data_points": {"text": ""},
-                "thoughts": [ThoughtStep(title="Product Cards Details", description=[], props={})],
-            }
-
             return specify_package_resp
 
         specify_package_filters = handle_specify_package_function_call(specify_package_chat_completion)
