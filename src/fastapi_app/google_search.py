@@ -30,7 +30,7 @@ def google_search_function(search_query):
                 links.append(link)
         return links
     else:
-        return {"error": "An error occurred"}
+        return {"error": "Google search failed"}
 
 
 if __name__ == "__main__":
