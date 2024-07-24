@@ -37,7 +37,7 @@ export const Answer = ({
 
     return (
         <Stack className={`${styles.answerContainer} ${isSelected && styles.selected}`} verticalAlign="space-between">
-            <Stack.Package>
+            <Stack.Item>
                 <Stack horizontal horizontalAlign="space-between">
                     <AnswerIcon />
                     <div>
@@ -59,14 +59,14 @@ export const Answer = ({
                         />
                     </div>
                 </Stack>
-            </Stack.Package>
+            </Stack.Item>
 
-            <Stack.Package grow>
+            <Stack.Item grow>
                 <div className={styles.answerText} dangerouslySetInnerHTML={{ __html: sanitizedAnswerHtml }}></div>
-            </Stack.Package>
+            </Stack.Item>
 
             {!!parsedAnswer.citations.length && (
-                <Stack.Package>
+                <Stack.Item>
                     <Stack horizontal wrap tokens={{ childrenGap: 5 }}>
                         <span className={styles.citationLearnMore}>Citations:</span>
                         {parsedAnswer.citations.map((x, i) => {
@@ -77,11 +77,11 @@ export const Answer = ({
                             );
                         })}
                     </Stack>
-                </Stack.Package>
+                </Stack.Item>
             )}
 
             {!!followupQuestions?.length && showFollowupQuestions && onFollowupQuestionClicked && (
-                <Stack.Package>
+                <Stack.Item>
                     <Stack horizontal wrap className={`${!!parsedAnswer.citations.length ? styles.followupQuestionsList : ""}`} tokens={{ childrenGap: 6 }}>
                         <span className={styles.followupQuestionLearnMore}>Follow-up questions:</span>
                         {followupQuestions.map((x, i) => {
@@ -92,7 +92,7 @@ export const Answer = ({
                             );
                         })}
                     </Stack>
-                </Stack.Package>
+                </Stack.Item>
             )}
         </Stack>
     );

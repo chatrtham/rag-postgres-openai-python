@@ -41,13 +41,13 @@ def convert_to_str(value):
 
 
 async def seed_data(engine):
-    logger.info("Checking if the packages_all_staging table exists...")
+    logger.info("Checking if the packages_all table exists...")
     async with engine.begin() as conn:
         result = await conn.execute(
             text(
                 """
                 SELECT EXISTS 
-                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_all_staging')
+                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_all')
                 """  # noqa
             )
         )
@@ -101,7 +101,6 @@ async def seed_data(engine):
                     continue
 
                 item_data = {key: value for key, value in record.items() if key in Package.__table__.columns}
-
 
                 for key, value in item_data.items():
                     if key not in [

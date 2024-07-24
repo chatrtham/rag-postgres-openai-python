@@ -24,7 +24,7 @@ email_validator==2.1.1
 environs==11.0.0
 fastapi==0.111.0
 fastapi-cli==0.0.4
--e git+https://github.com/chatrtham/rag-postgres-openai-python.git@c63d4e04d0043c99fc0eafd55a2116f2f4e36b5a#egg=fastapi_app&subdirectory=src
+-e git+https://github.com/chatrtham/rag-postgres-openai-python.git@7f1578f2d48381331570f68cc13167c3290ee097#egg=fastapi_app&subdirectory=src
 filelock==3.14.0
 fixedint==0.1.6
 frozenlist==1.4.1

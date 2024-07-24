@@ -11,7 +11,7 @@ class Base(DeclarativeBase, MappedAsDataclass):
 
 
 class Package(Base):
-    __tablename__ = "packages_all_staging"
+    __tablename__ = "packages_all"
     package_name: Mapped[str] = mapped_column()
     package_picture: Mapped[str] = mapped_column()
     url: Mapped[str] = mapped_column(primary_key=True)
@@ -54,7 +54,7 @@ class Package(Base):
 
     def to_dict(self):
         return asdict(self)
-    
+
     def to_str_for_broad_rag(self):
         return f"""
     package_name: {self.package_name}

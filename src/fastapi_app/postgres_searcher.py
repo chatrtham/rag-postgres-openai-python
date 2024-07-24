@@ -31,7 +31,7 @@ class PostgresSearcher:
         """
         filter_clause_where, _ = self.build_filter_clause(filters, use_or=True)
         sql = f"""
-        SELECT url FROM packages_all_staging
+        SELECT url FROM packages_all
         {filter_clause_where}
         LIMIT 10
         """
