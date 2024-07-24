@@ -19,36 +19,6 @@ from fastapi_app.postgres_models import Package
 
 logger = logging.getLogger("ragapp")
 
-embedding_fields = [
-    "embedding_package_name",
-    "embedding_category",
-    "embedding_category_tags",
-    "embedding_meta_keywords",
-    "embedding_brand",
-    "embedding_locations",
-    "embedding_meta_description",
-    "embedding_price_details",
-    "embedding_package_details",
-    "embedding_important_info",
-    "embedding_payment_booking_info",
-    "embedding_general_info",
-    "embedding_early_signs_for_diagnosis",
-    "embedding_how_to_diagnose",
-    "embedding_hdcare_summary",
-    "embedding_common_question",
-    "embedding_know_this_disease",
-    "embedding_courses_of_action",
-    "embedding_signals_to_proceed_surgery",
-    "embedding_get_to_know_this_surgery",
-    "embedding_comparisons",
-    "embedding_getting_ready",
-    "embedding_recovery",
-    "embedding_side_effects",
-    "embedding_review_4_5_stars",
-    "embedding_brand_option_in_thai_name",
-    "embedding_faq",
-]
-
 
 def convert_to_int(value):
     try:
@@ -132,8 +102,6 @@ async def seed_data(engine):
 
                 item_data = {key: value for key, value in record.items() if key in Package.__table__.columns}
 
-                for field in embedding_fields:
-                    item_data[field] = None
 
                 for key, value in item_data.items():
                     if key not in [
