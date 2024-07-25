@@ -34,6 +34,6 @@ def google_search_function(search_query):
 
 
 if __name__ == "__main__":
-    search_query = "ลดขนาดหน้าอก "
+    search_query = "ลดขนาดหน้าอก"
     result = google_search_function(search_query)
     print(result)

@@ -23,18 +23,12 @@ class Package(Base):
     price_to_reserve_for_this_package: Mapped[float] = mapped_column()
     shop_name: Mapped[str] = mapped_column()
     category: Mapped[str] = mapped_column()
-    category_tags: Mapped[str] = mapped_column()
-    preview_1_10: Mapped[str] = mapped_column()
-    selling_point: Mapped[str] = mapped_column()
-    meta_keywords: Mapped[str] = mapped_column()
     brand: Mapped[str] = mapped_column()
     min_max_age: Mapped[str] = mapped_column()
     locations: Mapped[str] = mapped_column()
-    meta_description: Mapped[str] = mapped_column()
     price_details: Mapped[str] = mapped_column()
     package_details: Mapped[str] = mapped_column()
     important_info: Mapped[str] = mapped_column()
-    payment_booking_info: Mapped[str] = mapped_column()
     general_info: Mapped[str] = mapped_column()
     early_signs_for_diagnosis: Mapped[str] = mapped_column()
     how_to_diagnose: Mapped[str] = mapped_column()
@@ -49,7 +43,6 @@ class Package(Base):
     recovery: Mapped[str] = mapped_column()
     side_effects: Mapped[str] = mapped_column()
     review_4_5_stars: Mapped[str] = mapped_column()
-    brand_option_in_thai_name: Mapped[str] = mapped_column()
     faq: Mapped[str] = mapped_column()
 
     def to_dict(self):
@@ -74,18 +67,12 @@ class Package(Base):
     price_after_cash_discount: {self.price_after_cash_discount}
     installment_limit: {self.installment_limit}
     price_to_reserve_for_this_package: {self.price_to_reserve_for_this_package}
-    shop_name: {self.shop_name}
-    category_tags: {self.category_tags}
-    preview_1_10: {self.preview_1_10}
-    selling_point: {self.selling_point}
     brand: {self.brand}
     min_max_age: {self.min_max_age}
     locations: {self.locations}
-    meta_description: {self.meta_description}
     price_details: {self.price_details}
     package_details: {self.package_details}
     important_info: {self.important_info}
-    payment_booking_info: {self.payment_booking_info}
     general_info: {self.general_info}
     early_signs_for_diagnosis: {self.early_signs_for_diagnosis}
     how_to_diagnose: {self.how_to_diagnose}
@@ -100,6 +87,5 @@ class Package(Base):
     recovery: {self.recovery}
     side_effects: {self.side_effects}
     review_4_5_stars: {self.review_4_5_stars}
-    brand_option_in_thai_name: {self.brand_option_in_thai_name}
     faq: {self.faq}
     """
