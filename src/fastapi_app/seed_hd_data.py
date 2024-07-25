@@ -40,14 +40,14 @@ def convert_to_str(value):
     return str(value)
 
 
-async def seed_data(engine):
-    logger.info("Checking if the packages_all table exists...")
+async def seed_data(engine, table_name):
+    logger.info(f"Checking if the {table_name} table exists...")
     async with engine.begin() as conn:
         result = await conn.execute(
             text(
-                """
+                f"""
                 SELECT EXISTS 
-                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'packages_all')
+                (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '{table_name}')
                 """  # noqa
             )
         )
@@ -93,8 +93,6 @@ async def seed_data(engine):
                     record["price_to_reserve_for_this_package"] = convert_to_float(
                         record["price_to_reserve_for_this_package"]
                     )
-                if "brand_ranking_position" in record:
-                    record["brand_ranking_position"] = convert_to_int(record["brand_ranking_position"])
 
                 package = await session.execute(select(Package).filter(Package.url == record["url"]))
                 if package.scalars().first():
@@ -140,7 +138,9 @@ async def main():
     else:
         engine = await create_postgres_engine_from_args(args)
 
-    await seed_data(engine)
+    table_name = input("Insert table_name: ") # e.g. packages_all, packages_all_staging
+
+    await seed_data(engine, table_name)
     await engine.dispose()
 
 
