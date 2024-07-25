@@ -129,9 +129,9 @@ class AdvancedRAGChat:
                     ),
                 ]
             else:
-                # No results found with SQL search, fall back to the hybrid search
+                # No results found with SQL search, fall back to the google search
                 sources_content, thought_steps = await self.google_search(messages)
-        else:  # Hybrid search
+        else:  # Google search
             sources_content, thought_steps = await self.google_search(messages)
 
         content = "\n".join(sources_content)
