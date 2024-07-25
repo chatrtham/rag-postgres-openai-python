@@ -10,8 +10,7 @@ from openai_messages_token_helper import get_token_limit
 from tenacity import before_sleep_log, retry, stop_after_attempt, wait_random_exponential
 
 from .api_models import ThoughtStep
-from .postgres_searcher import PostgresSearcher
-from .query_rewriter import (
+from .llm_tools import (
     build_google_search_function,
     build_handover_to_cx_function,
     build_specify_package_function,
@@ -19,6 +18,7 @@ from .query_rewriter import (
     handle_specify_package_function_call,
     is_handover_to_cx,
 )
+from .postgres_searcher import PostgresSearcher
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
