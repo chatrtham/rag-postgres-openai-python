@@ -63,6 +63,7 @@ def build_specify_package_function() -> list[ChatCompletionToolParam]:
                             "description": """
                             The exact URL of the package from past messages,
                             e.g. 'https://hdmall.co.th/dental-clinics/xray-for-orthodontics-1-csdc'
+                            If it includes any UTM parameters, please remove them.
                             """
                         },
                         "package_name": {
