@@ -3,9 +3,11 @@ import logging
 import os
 
 import azure.identity.aio
+import fastapi
+from azure.monitor.opentelemetry import configure_azure_monitor
 from dotenv import load_dotenv
 from environs import Env
-from fastapi import FastAPI
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 from .globals import global_storage
 from .openai_clients import create_openai_chat_client
@@ -15,7 +17,7 @@ logger = logging.getLogger("ragapp")
 
 
 @contextlib.asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: fastapi.FastAPI):
     load_dotenv(override=True)
 
     azure_credential = None
@@ -40,6 +42,8 @@ async def lifespan(app: FastAPI):
     global_storage.openai_chat_client = openai_chat_client
     global_storage.openai_chat_model = openai_chat_model
 
+    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        SQLAlchemyInstrumentor().instrument(engine=engine.sync_engine)
     yield
 
     await engine.dispose()
@@ -54,7 +58,14 @@ def create_app():
     else:
         logging.basicConfig(level=logging.WARNING)
 
-    app = FastAPI(docs_url="/docs", lifespan=lifespan)
+    # Turn off particularly noisy INFO level logs from Azure Core SDK:
+    logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+
+    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        logger.info("Configuring Azure Monitor")
+        configure_azure_monitor(logger_name="ragapp")
+
+    app = fastapi.FastAPI(docs_url="/docs", lifespan=lifespan)
 
     from . import api_routes  # noqa
     from . import frontend_routes  # noqa
