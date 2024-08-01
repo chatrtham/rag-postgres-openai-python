@@ -65,17 +65,21 @@ class AdvancedRAGChat:
             max_tokens=query_response_token_limit,
             n=1,
             tools=build_google_search_function(),
-            tool_choice="auto",
+            tool_choice={"type": "function", "function": {"name": "search_google"}},
         )
 
-        query_text = extract_search_arguments(query_chat_completion)
+        search_query, locations = extract_search_arguments(query_chat_completion)
+        locations = [f'"{location}"' for location in locations] if locations else []
+
+        query_text = f"{search_query} {' OR '.join(locations)}" if locations else search_query
 
         results = await self.searcher.google_search(query_text, top=3)
 
         sources_content = [f"[{(package.url)}]:{package.to_str_for_broad_rag()}\n\n" for package in results]
 
         thought_steps = [
-            ThoughtStep(title="Prompt to generate search arguments", description=query_text, props={}),
+            ThoughtStep(title="Prompt to generate search arguments", description=messages, props={}),
+            ThoughtStep(title="Google Search query", description=query_text, props={}),
             ThoughtStep(title="Google Search results", description=[result.to_dict() for result in results], props={}),
         ]
         return sources_content, thought_steps

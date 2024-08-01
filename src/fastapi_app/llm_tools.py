@@ -11,7 +11,7 @@ def build_google_search_function() -> list[ChatCompletionToolParam]:
         {
             "type": "function",
             "function": {
-                "name": "search_database",
+                "name": "search_google",
                 "description": "Search for relevant products based on user query",
                 "parameters": {
                     "type": "object",
@@ -20,6 +20,17 @@ def build_google_search_function() -> list[ChatCompletionToolParam]:
                             "type": "string",
                             "description": "Query string to use for full text search, e.g. 'ตรวจสุขภาพ'",
                         },
+                        "locations": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                            },
+                            "description": """
+                            A list of nearby districts(Amphoes) from what the user provides.
+                            For example, if the user says `รังสิต`, the locations should be 
+                            [`ธัญบุรี`, `เมืองปทุมธานี`, `คลองหลวง`, `ลำลูกกา`].
+                            """
+                        }
                     },
                     "required": ["search_query"],
                 },
@@ -30,19 +41,19 @@ def build_google_search_function() -> list[ChatCompletionToolParam]:
 def extract_search_arguments(chat_completion: ChatCompletion):
     response_message = chat_completion.choices[0].message
     search_query = None
+
     
     if response_message.tool_calls:
         for tool in response_message.tool_calls:
             if tool.type != "function":
                 continue
             function = tool.function
-            if function.name == "search_database":
+            if function.name == "search_google":
                 arg = json.loads(function.arguments)
                 search_query = arg.get("search_query")
-    elif query_text := response_message.content:
-        search_query = query_text.strip()
+                locations = arg.get("locations", [])
         
-    return search_query
+    return search_query, locations
 
 
 def build_specify_package_function() -> list[ChatCompletionToolParam]:
