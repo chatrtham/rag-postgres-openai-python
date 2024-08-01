@@ -29,6 +29,7 @@ def build_google_search_function() -> list[ChatCompletionToolParam]:
                             A list of nearby districts(Amphoes) from what the user provides.
                             For example, if the user says `รังสิต`, the locations should be 
                             [`ธัญบุรี`, `เมืองปทุมธานี`, `คลองหลวง`, `ลำลูกกา`].
+                            Only parse this property if the user specifies an area, not a specific place.
                             """
                         }
                     },
